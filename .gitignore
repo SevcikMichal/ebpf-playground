@@ -1,0 +1,50 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go binaries
+counter/ebpf-test
+counter/counter
+schedule_switch/schedule_switch
+schedule_switch/sched-switch
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# eBPF compiled objects
+*_bpfeb.o
+*_bpfel.o
+
+# eBPF generated Go files
+*_bpfeb.go
+*_bpfel.go
+
+# Dependency directories
+vendor/
+
+# Go sum files (optional, some prefer to keep these)
+# go.sum
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Output logs
+*.log
+output.log
+
+# OS files
+.DS_Store
+Thumbs.db
