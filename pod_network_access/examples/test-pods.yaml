@@ -1,0 +1,91 @@
+# Example 1: Simple test pod that will make external requests
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-external-access
+  labels:
+    monitor: external  # This label causes it to be monitored
+    app: test
+spec:
+  containers:
+  - name: curl
+    image: curlimages/curl:latest
+    command: ["sleep", "3600"]
+    resources:
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+---
+# Example 2: Nginx pod that should be monitored
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-monitored
+  labels:
+    monitor: external
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    ports:
+    - containerPort: 80
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+---
+# Example 3: Pod that should NOT be monitored (no label)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-unmonitored
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    ports:
+    - containerPort: 80
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+---
+# Example 4: Deployment with multiple replicas (all monitored)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitored-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: monitored-app
+  template:
+    metadata:
+      labels:
+        app: monitored-app
+        monitor: external  # All pods in this deployment will be monitored
+    spec:
+      containers:
+      - name: app
+        image: busybox:latest
+        command: ["sleep", "3600"]
+        resources:
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
+          requests:
+            memory: "32Mi"
+            cpu: "50m"

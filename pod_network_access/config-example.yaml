@@ -1,0 +1,33 @@
+# Example ConfigMap for Pod Network Monitor Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pod-network-monitor-config
+  namespace: kube-system
+data:
+  # Pod selector - monitor pods with these labels
+  # Format: "key1=value1,key2=value2"
+  pod-selector: "monitor=external,environment=production"
+  
+  # Block external traffic (true/false)
+  block-external: "false"
+  
+  # Internal CIDRs (comma-separated)
+  # These IPs are considered internal and won't trigger alerts
+  internal-cidrs: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+
+---
+# Example: Apply this label to pods you want to monitor
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+  labels:
+    monitor: external  # This label will cause the pod to be monitored
+    environment: production
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 80

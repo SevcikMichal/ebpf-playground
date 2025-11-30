@@ -1,0 +1,97 @@
+# Example: Block external traffic for specific pods
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pod-network-monitor-config-blocking
+  namespace: kube-system
+data:
+  pod-selector: "security=strict"
+  block-external: "true"  # This will block external traffic
+  internal-cidrs: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+---
+# Apply this updated DaemonSet configuration to enable blocking
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pod-network-monitor-blocking
+  namespace: kube-system
+  labels:
+    app: pod-network-monitor
+spec:
+  selector:
+    matchLabels:
+      app: pod-network-monitor-blocking
+  template:
+    metadata:
+      labels:
+        app: pod-network-monitor-blocking
+    spec:
+      serviceAccountName: pod-network-monitor
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: monitor
+        image: pod-network-monitor:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - SYS_ADMIN
+            - NET_ADMIN
+            - BPF
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_SELECTOR
+          value: "security=strict"  # Only monitor pods with this label
+        - name: BLOCK_EXTERNAL
+          value: "true"  # Enable blocking
+        - name: INTERNAL_CIDRS
+          value: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+        volumeMounts:
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+      volumes:
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: proc
+        hostPath:
+          path: /proc
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+---
+# Test pod that will have external access blocked
+apiVersion: v1
+kind: Pod
+metadata:
+  name: blocked-pod
+  labels:
+    security: strict  # This matches the selector above
+    app: test
+spec:
+  containers:
+  - name: test
+    image: curlimages/curl:latest
+    command: ["sleep", "3600"]
+    resources:
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+      requests:
+        memory: "32Mi"
+        cpu: "50m"

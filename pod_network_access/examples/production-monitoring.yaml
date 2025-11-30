@@ -1,0 +1,130 @@
+# Example: Monitor only production pods
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: production-app
+  labels:
+    environment: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-server
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: web-server
+        environment: production
+        monitor: external  # Enable monitoring for all production pods
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+---
+# Example: Development pods (not monitored)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: development-app
+  labels:
+    environment: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-server
+      environment: development
+  template:
+    metadata:
+      labels:
+        app: web-server
+        environment: development
+        # Note: no "monitor: external" label
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+---
+# DaemonSet configured to monitor production pods only
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pod-network-monitor-production
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: pod-network-monitor-prod
+  template:
+    metadata:
+      labels:
+        app: pod-network-monitor-prod
+    spec:
+      serviceAccountName: pod-network-monitor
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: monitor
+        image: pod-network-monitor:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - SYS_ADMIN
+            - NET_ADMIN
+            - BPF
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_SELECTOR
+          # Monitor only production pods with external monitoring enabled
+          value: "environment=production,monitor=external"
+        - name: BLOCK_EXTERNAL
+          value: "false"
+        - name: INTERNAL_CIDRS
+          value: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+        volumeMounts:
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+      volumes:
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: proc
+        hostPath:
+          path: /proc
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists

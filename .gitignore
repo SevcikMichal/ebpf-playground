@@ -10,6 +10,8 @@ counter/ebpf-test
 counter/counter
 schedule_switch/schedule_switch
 schedule_switch/sched-switch
+pod_network_access/pod_network_access
+pod_network_access/pod-network-monitor
 
 # Test binary, built with `go test -c`
 *.test
