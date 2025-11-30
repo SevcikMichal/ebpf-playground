@@ -100,8 +100,8 @@ kubectl exec test-nginx -- nslookup kubernetes.default.svc.cluster.local
 
 You should see logs like:
 ```
-⚠️  EXTERNAL ACCESS ALLOWED: Pod=test-nginx Src=10.244.0.5:45678 Dst=8.8.8.8:53 Proto=UDP
-⚠️  EXTERNAL ACCESS ALLOWED: Pod=test-nginx Src=10.244.0.5:52341 Dst=142.250.185.46:443 Proto=TCP
+TRAFFIC: 10.244.0.5:45678 -> 8.8.8.8:53 (UDP) [ALLOWED] [pod: default/test-nginx]
+TRAFFIC: 10.244.0.5:52341 -> 142.250.185.46:443 (TCP) [ALLOWED] [pod: default/test-nginx]
 ```
 
 ## Enable Blocking Mode
@@ -186,10 +186,10 @@ docker images | grep pod-network-monitor
    kubectl get daemonset -n kube-system pod-network-monitor -o yaml | grep -A 10 "env:"
    ```
 
-3. Verify internal CIDRs match your cluster:
+3. Check the pod IPs and verify they're being tracked:
    ```bash
-   kubectl get nodes -o wide
    kubectl get pods -o wide
+   kubectl logs -n kube-system -l app=pod-network-monitor | grep "Found monitored pod"
    ```
 
 ### Permission issues

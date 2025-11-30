@@ -102,15 +102,15 @@ kubectl logs -n kube-system -l app=pod-network-monitor-prod -f
 
 ## Expected Output
 
-When external access is detected:
+When traffic is allowed:
 ```
-⚠️  EXTERNAL ACCESS ALLOWED: Pod=test-external-access Src=10.244.0.5:45678 Dst=8.8.8.8:53 Proto=UDP
-⚠️  EXTERNAL ACCESS ALLOWED: Pod=test-external-access Src=10.244.0.5:52341 Dst=142.250.185.46:443 Proto=TCP
+TRAFFIC: 10.244.0.5:45678 -> 8.8.8.8:53 (UDP) [ALLOWED] [pod: default/test-external-access] [map_lookup=true, flag=0, lookup_ip=0x0af40024]
+TRAFFIC: 10.244.0.5:52341 -> 142.250.185.46:443 (TCP) [ALLOWED] [pod: default/test-external-access] [map_lookup=true, flag=0, lookup_ip=0x0af40024]
 ```
 
 When traffic is blocked:
 ```
-⚠️  EXTERNAL ACCESS BLOCKED: Pod=blocked-pod Src=10.244.0.5:45678 Dst=8.8.8.8:53 Proto=UDP
+TRAFFIC: 10.244.0.5:45678 -> 8.8.8.8:53 (UDP) [BLOCKED] [pod: default/blocked-pod] [map_lookup=true, flag=1, lookup_ip=0x0af40024]
 ```
 
 ## Cleanup
